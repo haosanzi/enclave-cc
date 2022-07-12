@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/confidential-containers/enclave-cc/shim/runtime/v2/rune/constants"
+	"github.com/confidential-containers/enclave-cc/shim/runtime/v2/rune/oci"
+	"github.com/confidential-containers/enclave-cc/shim/runtime/v2/rune/types"
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	eventstypes "github.com/containerd/containerd/api/events"
@@ -298,12 +300,11 @@ func (s *service) Cleanup(ctx context.Context) (*taskAPI.DeleteResponse, error) 
 	shimLog.WithField("id", s.id).Debug("Cleanup() start")
 	defer shimLog.WithField("id", s.id).Debug("Cleanup() end")
 
-	cwd, err := os.Getwd()
+	path, err := os.Getwd()
 	if err != nil {
 		return nil, err
 	}
 
-	path := filepath.Join(filepath.Dir(cwd), s.id)
 	ns, err := namespaces.NamespaceRequired(ctx)
 	if err != nil {
 		return nil, err
@@ -320,6 +321,41 @@ func (s *service) Cleanup(ctx context.Context) (*taskAPI.DeleteResponse, error) 
 	if opts != nil && opts.Root != "" {
 		root = opts.Root
 	}
+
+	ociSpec, _, err := loadSpec(s.id, path)
+	if err != nil {
+		return nil, err
+	}
+	containerType, err := oci.ContainerType(*ociSpec)
+	if err != nil {
+		return nil, err
+	}
+	sandboxNamspace, err := oci.SandboxNamespace(*ociSpec)
+	if err != nil {
+		return nil, err
+	}
+
+	switch containerType {
+	case types.PodSandbox:
+		if sandboxNamspace != types.KubeSystem {
+			agentID, err := readAgentIdFile(path)
+			if err != nil {
+				return nil, err
+			}
+
+			err = cleanupAgentContainer(ctx, agentID)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	shimLog.WithFields(logrus.Fields{
+		"root":    root,
+		"path":    path,
+		"ns":      ns,
+		"runtime": runtime,
+	}).Debug("Container Cleanup()")
 
 	r := process.NewRunc(root, path, ns, runtime, "", false)
 	if err := r.Delete(ctx, s.id, &runcC.DeleteOpts{
