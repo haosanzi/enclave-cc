@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/confidential-containers/enclave-cc/shim/runtime/v2/rune/constants"
 	"github.com/containerd/cgroups"
 	cgroupsv2 "github.com/containerd/cgroups/v2"
 	eventstypes "github.com/containerd/containerd/api/events"
@@ -34,7 +35,6 @@ import (
 	"github.com/containerd/typeurl"
 	"github.com/gogo/protobuf/proto"
 	ptypes "github.com/gogo/protobuf/types"
-	"github.com/inclavare-containers/shim/runtime/v2/rune/constants"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
