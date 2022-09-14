@@ -1,0 +1,67 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  #
+  # golangci-lint
+  #
+  linters:
+    name: Linters
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    strategy:
+      matrix:
+        go-version: [1.17.7]
+        os: [ubuntu-20.04]
+
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - uses: actions/checkout@v2
+      - uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.42.0
+          args: --timeout=5m
+          skip-go-installation: true
+
+  #
+  # Build shim binaries
+  #
+  binaries:
+    name: Binaries
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    needs: [linters]
+
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        go-version: ['1.17.7']
+
+    steps:
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go-version }}
+
+      - name: Set env
+        shell: bash
+        run: |
+          echo "GOPATH=${{ github.workspace }}" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+      - uses: actions/checkout@v2
+        with:
+          path: src/github.com/confidential-containers/enclave-cc/src/shim
+
+      - name: Make
+        run: |
+          make binaries
+        working-directory: src/github.com/confidential-containers/enclave-cc/src/shim
