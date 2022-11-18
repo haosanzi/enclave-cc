@@ -11,6 +11,7 @@ require (
 	github.com/containerd/ttrpc v1.1.0
 	github.com/containerd/typeurl v1.0.2
 	github.com/gogo/protobuf v1.3.2
+	github.com/golang/protobuf v1.5.2
 	github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417
 	github.com/prashantv/gostub v1.1.0
 	github.com/sirupsen/logrus v1.9.0
@@ -31,7 +32,6 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

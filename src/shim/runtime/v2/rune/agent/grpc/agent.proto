@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+// option go_package = "github.com/confidential-containers/enclave-cc/src/shim/runtime/v2/rune/rune/agent/grpc";
+
+package grpc;
+
+import "google/protobuf/empty.proto";
+
+service AgentService {
+	rpc SyncConfig(SyncConfigRequest) returns (google.protobuf.Empty);
+}
+
+message SyncConfigRequest {
+	string container_id = 1;
+	// Process configures the container process.
+	Process Process = 2;
+}
+
+message Process {
+	// Args specifies the binary and arguments for the application to execute.
+	repeated string Args = 1;
+
+	// Env populates the process environment for the process.
+	repeated string Env = 2;
+
+	// Cwd is the current working directory for the process and must be
+	// relative to the container's root.
+	string Cwd = 3;
+}

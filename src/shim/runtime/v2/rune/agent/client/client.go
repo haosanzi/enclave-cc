@@ -34,6 +34,7 @@ var agentClientLog = logrus.WithFields(agentClientFields)
 
 // AgentClient is an agent gRPC client connection wrapper for agentgrpc.AgentServiceClient
 type AgentClient struct {
+	AgentServiceClient agentgrpc.AgentServiceService
 	ImageServiceClient agentgrpc.ImageService
 	conn               *ttrpc.Client
 }
@@ -70,6 +71,7 @@ func NewAgentClient(ctx context.Context, sock string, timeout uint32) (*AgentCli
 	client := ttrpc.NewClient(conn)
 
 	return &AgentClient{
+		AgentServiceClient: agentgrpc.NewAgentServiceClient(client),
 		ImageServiceClient: agentgrpc.NewImageClient(client),
 		conn:               client,
 	}, nil

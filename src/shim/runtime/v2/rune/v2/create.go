@@ -136,6 +136,11 @@ func handlePodContainer(ctx context.Context, s *service, r *taskAPI.CreateTaskRe
 			"Rootfs": r.Rootfs,
 			"Bundle": r.Bundle,
 		}).Debug("Create app enclave container based on sefs image")
+
+		err = s.agent.SyncConfig(ctx, r.ID, ociSpec)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	container, err := runc.NewContainer(ctx, s.platform, r)

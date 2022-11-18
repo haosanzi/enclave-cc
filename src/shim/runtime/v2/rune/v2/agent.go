@@ -27,17 +27,19 @@ import (
 	"github.com/containerd/continuity/fs"
 	runcC "github.com/containerd/go-runc"
 	"github.com/gogo/protobuf/proto"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	grpcStatus "google.golang.org/grpc/status"
 )
 
 const (
-	configFilename       = "config.json"
-	defaultDirPerm       = 0700
-	defaultFilePerms     = 0600
-	agentIDFile          = "agent-id"
-	grpcPullImageRequest = "grpc.PullImageRequest"
+	configFilename        = "config.json"
+	defaultDirPerm        = 0700
+	defaultFilePerms      = 0600
+	agentIDFile           = "agent-id"
+	grpcPullImageRequest  = "grpc.PullImageRequest"
+	grpcSyncConfigRequest = "grpc.SyncConfigRequest"
 )
 
 var (
@@ -119,6 +121,9 @@ func (c *agent) installReqFunc(client *agentClient.AgentClient) {
 	c.reqHandlers[grpcPullImageRequest] = func(ctx context.Context, req interface{}) (interface{}, error) {
 		return c.client.ImageServiceClient.PullImage(ctx, req.(*grpc.PullImageRequest))
 	}
+	c.reqHandlers[grpcSyncConfigRequest] = func(ctx context.Context, req interface{}) (interface{}, error) {
+		return c.client.AgentServiceClient.SyncConfig(ctx, req.(*grpc.SyncConfigRequest))
+	}
 }
 
 func (c *agent) sendReq(spanCtx context.Context, request interface{}) (interface{}, error) {
@@ -184,6 +189,25 @@ func (c *agent) PullImage(ctx context.Context, req *image.PullImageReq) (*image.
 	return &image.PullImageResp{
 		ImageRef: response.ImageRef,
 	}, nil
+}
+
+func (c *agent) SyncConfig(ctx context.Context, id string, ociSpec *specs.Spec) error {
+	process := &grpc.Process{
+		Args: ociSpec.Process.Args,
+		Env:  ociSpec.Process.Env,
+		Cwd:  ociSpec.Process.Cwd,
+	}
+
+	req := &grpc.SyncConfigRequest{
+		ContainerId: id,
+		Process:     process,
+	}
+
+	if _, err := c.sendReq(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // The function creates agent enclave container based on a pre-installed OCI bundle
